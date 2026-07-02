@@ -92,9 +92,9 @@ def riepilogo_presenze(mese: str | None = None) -> dict:
     return {"mese": mese or "tutti", **presenze.riepilogo(righe)}
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover - avvio stdio bloccante, coperto dallo smoke test JSON-RPC
     mcp.run()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

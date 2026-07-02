@@ -1,6 +1,12 @@
 """Test parsing export presenze/timbrature Inaz (CSV)."""
 
-from inaz_mcp.presenze import filtra_mese, leggi_presenze, ore_in_float, riepilogo
+from inaz_mcp.presenze import (
+    filtra_mese,
+    leggi_presenze,
+    normalizza_data,
+    ore_in_float,
+    riepilogo,
+)
 
 CSV_STANDARD = """Data;Entrata;Uscita;Ore;Causale
 02/03/2026;09:00;17:30;7,5;ORDINARIO
@@ -40,6 +46,16 @@ def test_ore_in_float():
     assert ore_in_float("07:30") == 7.5
     assert ore_in_float("8") == 8.0
     assert ore_in_float("") is None
+    assert ore_in_float("abc") is None
+    assert ore_in_float("aa:bb") is None
+
+
+def test_data_non_riconosciuta_resta_invariata():
+    assert normalizza_data("marzo boh") == "marzo boh"
+
+
+def test_csv_vuoto(tmp_path):
+    assert leggi_presenze(_scrivi(tmp_path, "vuoto.csv", "")) == []
 
 
 def test_filtra_mese():

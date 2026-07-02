@@ -77,6 +77,15 @@ def test_lista_presenze_mese_non_valido(cartella_dati):
         server.lista_presenze("marzo")
 
 
+def test_pdf_corrotto_non_blocca(cartella_dati):
+    (cartella_dati / "rotto.pdf").write_bytes(b"non sono un pdf")
+    elenco = server.lista_cedolini()
+    rotto = next(voce for voce in elenco if voce["file"] == "rotto.pdf")
+    assert "errore" in rotto
+    trovati = server.cerca_nei_cedolini("netto")
+    assert [voce["file"] for voce in trovati] == ["cedolino_2026_03.pdf"]
+
+
 def test_riepilogo_presenze(cartella_dati):
     totali = server.riepilogo_presenze()
     assert totali["totale_ore"] == 11.5

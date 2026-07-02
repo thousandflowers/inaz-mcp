@@ -51,6 +51,7 @@ def test_numero_italiano():
     assert numero_italiano("415,32") == 415.32
     assert numero_italiano("1234.56") == 1234.56
     assert numero_italiano("") is None
+    assert numero_italiano("abc") is None
 
 
 def test_estrai_testo_pdf(tmp_path):
