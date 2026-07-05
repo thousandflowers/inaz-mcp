@@ -1,8 +1,10 @@
 """Parsing export presenze/timbrature Inaz (CSV con intestazioni variabili)."""
 
 import csv
+from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 # Alias di intestazione visti nei tracciati presenze: chiave normalizzata → varianti.
 ALIAS_COLONNE: dict[str, tuple[str, ...]] = {
@@ -16,7 +18,7 @@ ALIAS_COLONNE: dict[str, tuple[str, ...]] = {
 FORMATI_DATA = ("%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y", "%d/%m/%y")
 
 
-def _mappa_intestazioni(intestazioni: list[str]) -> dict[str, str]:
+def _mappa_intestazioni(intestazioni: Sequence[str]) -> dict[str, str]:
     """Mappa nome colonna originale → chiave normalizzata."""
     mappa = {}
     for originale in intestazioni:
@@ -60,7 +62,7 @@ def _rileva_delimitatore(prima_riga: str) -> str:
     return ";" if prima_riga.count(";") >= prima_riga.count(",") else ","
 
 
-def leggi_presenze(percorso: Path | str) -> list[dict]:
+def leggi_presenze(percorso: Path | str) -> list[dict[str, Any]]:
     """Legge un CSV presenze e restituisce righe con chiavi normalizzate."""
     contenuto = Path(percorso).read_text(encoding="utf-8-sig")
     righe_grezze = contenuto.splitlines()
@@ -69,9 +71,9 @@ def leggi_presenze(percorso: Path | str) -> list[dict]:
     delimitatore = _rileva_delimitatore(righe_grezze[0])
     lettore = csv.DictReader(righe_grezze, delimiter=delimitatore)
     mappa = _mappa_intestazioni(lettore.fieldnames or [])
-    righe = []
+    righe: list[dict[str, Any]] = []
     for grezza in lettore:
-        riga: dict = {}
+        riga: dict[str, Any] = {}
         for originale, chiave in mappa.items():
             valore = (grezza.get(originale) or "").strip()
             if chiave == "data":
@@ -84,14 +86,14 @@ def leggi_presenze(percorso: Path | str) -> list[dict]:
     return righe
 
 
-def filtra_mese(righe: list[dict], mese: str | None) -> list[dict]:
+def filtra_mese(righe: list[dict[str, Any]], mese: str | None) -> list[dict[str, Any]]:
     """Filtra le righe per mese ISO "aaaa-mm". mese=None → tutte."""
     if not mese:
         return righe
     return [riga for riga in righe if str(riga.get("data", "")).startswith(mese)]
 
 
-def riepilogo(righe: list[dict]) -> dict:
+def riepilogo(righe: list[dict[str, Any]]) -> dict[str, Any]:
     """Totale ore, giorni distinti e ore per causale."""
     per_causale: dict[str, float] = {}
     totale = 0.0

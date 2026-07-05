@@ -1,6 +1,7 @@
 """Server MCP Inaz: espone cedolini e presenze locali come tool per Claude."""
 
 import re
+from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
@@ -15,7 +16,7 @@ def _valida_mese(mese: str | None) -> None:
 
 
 @mcp.tool()
-def info_cartella_dati() -> dict:
+def info_cartella_dati() -> dict[str, Any]:
     """Mostra la cartella dati Inaz configurata e quanti file contiene."""
     cartella = store.data_dir()
     trovati = store.trova_file(cartella)
@@ -31,7 +32,7 @@ def info_cartella_dati() -> dict:
 
 
 @mcp.tool()
-def lista_cedolini() -> list[dict]:
+def lista_cedolini() -> list[dict[str, Any]]:
     """Elenca i cedolini PDF nella cartella dati con i campi paga principali."""
     risultati = []
     for percorso in store.trova_file(store.data_dir())["cedolini"]:
@@ -44,7 +45,7 @@ def lista_cedolini() -> list[dict]:
 
 
 @mcp.tool()
-def leggi_cedolino(nome_file: str) -> dict:
+def leggi_cedolino(nome_file: str) -> dict[str, Any]:
     """Legge un cedolino per nome file: campi estratti + testo completo."""
     percorso = store.percorso_sicuro(store.data_dir(), nome_file)
     testo = cedolini.estrai_testo_pdf(percorso)
@@ -56,7 +57,7 @@ def leggi_cedolino(nome_file: str) -> dict:
 
 
 @mcp.tool()
-def cerca_nei_cedolini(testo: str) -> list[dict]:
+def cerca_nei_cedolini(testo: str) -> list[dict[str, Any]]:
     """Cerca una stringa (case-insensitive) in tutti i cedolini; righe che matchano."""
     if not testo.strip():
         raise ValueError("Testo di ricerca vuoto")
@@ -74,7 +75,7 @@ def cerca_nei_cedolini(testo: str) -> list[dict]:
 
 
 @mcp.tool()
-def lista_presenze(mese: str | None = None) -> list[dict]:
+def lista_presenze(mese: str | None = None) -> list[dict[str, Any]]:
     """Righe presenze da tutti i CSV, opzionalmente filtrate per mese "AAAA-MM"."""
     _valida_mese(mese)
     righe = []
@@ -85,7 +86,7 @@ def lista_presenze(mese: str | None = None) -> list[dict]:
 
 
 @mcp.tool()
-def riepilogo_presenze(mese: str | None = None) -> dict:
+def riepilogo_presenze(mese: str | None = None) -> dict[str, Any]:
     """Totale ore, giorni e ore per causale, opzionalmente per mese "AAAA-MM"."""
     _valida_mese(mese)
     righe = lista_presenze(mese)

@@ -1,5 +1,8 @@
 # inaz-mcp
 
+[![ci](https://github.com/thousandflowers/inaz-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/thousandflowers/inaz-mcp/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Server MCP per interrogare da Claude i tuoi export **Inaz** (il gestionale HR: cedolini, presenze).
 
 Inaz non espone API pubbliche: l'integrazione ufficiale avviene via file. Questo server rende interrogabili i file che scarichi dal portale HR:
@@ -65,14 +68,21 @@ I tracciati Inaz variano per azienda. Il parsing è guidato da tabelle di patter
 
 Se il tuo export usa etichette diverse, aggiungi la variante alla tabella: nessuna modifica al codice.
 
-## Test
+## Sviluppo
 
 ```bash
-uv run pytest --cov=inaz_mcp
+uv run pytest --cov=inaz_mcp --cov-report=term-missing  # 32 test, copertura 100%
+uv run ruff check .                                       # lint
+uv run ruff format .                                      # formattazione
+uv run mypy inaz_mcp                                      # type check (strict)
 ```
 
-28 test, copertura 92%.
+CI su GitHub Actions esegue tutti e quattro su Python 3.11/3.12/3.13 a ogni push.
 
 ## Privacy
 
 Tutto gira in locale: nessun dato lascia il tuo Mac. I cedolini contengono dati personali — la cartella dati resta fuori dal repository.
+
+## Licenza
+
+[MIT](LICENSE)

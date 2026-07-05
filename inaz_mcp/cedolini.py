@@ -44,9 +44,9 @@ def _primo_match(testo: str, pattern: list[str]) -> str | None:
     return None
 
 
-def analizza_cedolino(testo: str) -> dict:
+def analizza_cedolino(testo: str) -> dict[str, str | float | None]:
     """Estrae i campi principali dal testo di un cedolino. Campi assenti = None."""
-    dati: dict = {}
+    dati: dict[str, str | float | None] = {}
     for campo, pattern in PATTERN_TESTO.items():
         dati[campo] = _primo_match(testo, pattern)
     for campo, pattern in PATTERN_NUMERICI.items():

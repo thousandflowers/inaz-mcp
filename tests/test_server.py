@@ -13,9 +13,7 @@ CSV_PRESENZE = """Data;Entrata;Uscita;Ore;Causale
 
 @pytest.fixture
 def cartella_dati(tmp_path, monkeypatch):
-    (tmp_path / "cedolino_2026_03.pdf").write_bytes(
-        pdf_minimo("NETTO IN BUSTA 1.434,68")
-    )
+    (tmp_path / "cedolino_2026_03.pdf").write_bytes(pdf_minimo("NETTO IN BUSTA 1.434,68"))
     (tmp_path / "presenze.csv").write_text(CSV_PRESENZE, encoding="utf-8")
     monkeypatch.setenv("INAZ_DATA_DIR", str(tmp_path))
     return tmp_path
