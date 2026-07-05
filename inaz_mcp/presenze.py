@@ -3,6 +3,7 @@
 import csv
 from collections.abc import Sequence
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -62,8 +63,8 @@ def _rileva_delimitatore(prima_riga: str) -> str:
     return ";" if prima_riga.count(";") >= prima_riga.count(",") else ","
 
 
-def leggi_presenze(percorso: Path | str) -> list[dict[str, Any]]:
-    """Legge un CSV presenze e restituisce righe con chiavi normalizzate."""
+@lru_cache(maxsize=256)
+def _leggi_presenze_cache(percorso: str, mtime_ns: int, dimensione: int) -> list[dict[str, Any]]:
     contenuto = Path(percorso).read_text(encoding="utf-8-sig")
     righe_grezze = contenuto.splitlines()
     if not righe_grezze:
@@ -84,6 +85,14 @@ def leggi_presenze(percorso: Path | str) -> list[dict[str, Any]]:
                 riga[chiave] = valore
         righe.append(riga)
     return righe
+
+
+def leggi_presenze(percorso: Path | str) -> list[dict[str, Any]]:
+    """Legge un CSV presenze e restituisce righe con chiavi normalizzate (cache in memoria)."""
+    percorso = Path(percorso)
+    stat = percorso.stat()
+    righe = _leggi_presenze_cache(str(percorso), stat.st_mtime_ns, stat.st_size)
+    return [dict(riga) for riga in righe]
 
 
 def filtra_mese(righe: list[dict[str, Any]], mese: str | None) -> list[dict[str, Any]]:

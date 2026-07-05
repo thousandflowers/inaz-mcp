@@ -58,6 +58,21 @@ def test_csv_vuoto(tmp_path):
     assert leggi_presenze(_scrivi(tmp_path, "vuoto.csv", "")) == []
 
 
+def test_leggi_presenze_cache_invalidata_da_modifica(tmp_path):
+    percorso = _scrivi(tmp_path, "p.csv", CSV_STANDARD)
+    assert len(leggi_presenze(percorso)) == 2
+
+    percorso.write_text("Data;Ore\n01/01/2026;1\n02/01/2026;2\n03/01/2026;3\n", encoding="utf-8")
+    assert len(leggi_presenze(percorso)) == 3
+
+
+def test_leggi_presenze_righe_sono_copie_indipendenti(tmp_path):
+    percorso = _scrivi(tmp_path, "p.csv", CSV_STANDARD)
+    righe = leggi_presenze(percorso)
+    righe[0]["causale"] = "MODIFICATO"
+    assert leggi_presenze(percorso)[0]["causale"] != "MODIFICATO"
+
+
 def test_filtra_mese():
     righe = [{"data": "2026-03-02"}, {"data": "2026-04-01"}]
     assert filtra_mese(righe, "2026-03") == [{"data": "2026-03-02"}]

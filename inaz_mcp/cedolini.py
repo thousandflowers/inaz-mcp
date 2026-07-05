@@ -1,6 +1,7 @@
 """Parsing cedolini Inaz: estrazione testo dal PDF e campi paga dal testo."""
 
 import re
+from functools import lru_cache
 from pathlib import Path
 
 from pypdf import PdfReader
@@ -55,7 +56,14 @@ def analizza_cedolino(testo: str) -> dict[str, str | float | None]:
     return dati
 
 
-def estrai_testo_pdf(percorso: Path | str) -> str:
-    """Estrae il testo da tutte le pagine di un PDF."""
-    lettore = PdfReader(str(percorso))
+@lru_cache(maxsize=256)
+def _estrai_testo_pdf_cache(percorso: str, mtime_ns: int, dimensione: int) -> str:
+    lettore = PdfReader(percorso)
     return "\n".join(pagina.extract_text() or "" for pagina in lettore.pages)
+
+
+def estrai_testo_pdf(percorso: Path | str) -> str:
+    """Estrae il testo da tutte le pagine di un PDF (cache in memoria per file invariato)."""
+    percorso = Path(percorso)
+    stat = percorso.stat()
+    return _estrai_testo_pdf_cache(str(percorso), stat.st_mtime_ns, stat.st_size)

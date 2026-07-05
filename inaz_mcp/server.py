@@ -5,7 +5,7 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from inaz_mcp import cedolini, presenze, store
+from inaz_mcp import cedolini, comandi, presenze, store
 
 mcp = FastMCP("inaz")
 
@@ -91,6 +91,51 @@ def riepilogo_presenze(mese: str | None = None) -> dict[str, Any]:
     _valida_mese(mese)
     righe = lista_presenze(mese)
     return {"mese": mese or "tutti", **presenze.riepilogo(righe)}
+
+
+# Solo i tool di sola lettura sopra: mai includere qui i tool batch/preset
+# stessi, altrimenti un preset che si autorichiama va in ricorsione infinita.
+_REGISTRO_TOOL: dict[str, Any] = {
+    "info_cartella_dati": info_cartella_dati,
+    "lista_cedolini": lista_cedolini,
+    "leggi_cedolino": leggi_cedolino,
+    "cerca_nei_cedolini": cerca_nei_cedolini,
+    "lista_presenze": lista_presenze,
+    "riepilogo_presenze": riepilogo_presenze,
+}
+
+
+@mcp.tool()
+def esegui_comandi(comandi_richiesti: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Esegue più tool in sequenza in una sola chiamata (fa risparmiare round-trip).
+
+    Ogni comando: {"tool": nome, "argomenti": {...}}. Un errore in un comando
+    non blocca gli altri: viene riportato come {"tool": nome, "errore": ...}.
+    """
+    return comandi.esegui(_REGISTRO_TOOL, comandi_richiesti)
+
+
+@mcp.tool()
+def elenca_preset() -> dict[str, list[dict[str, Any]]]:
+    """Elenca i preset salvati (combinazioni di comandi) con i loro comandi."""
+    return comandi.carica_preset(store.data_dir())
+
+
+@mcp.tool()
+def salva_preset(
+    nome: str, comandi_richiesti: list[dict[str, Any]]
+) -> dict[str, list[dict[str, Any]]]:
+    """Salva (o sovrascrive) un preset: una combinazione di comandi richiamabile per nome."""
+    return comandi.salva_preset(store.data_dir(), nome, comandi_richiesti, set(_REGISTRO_TOOL))
+
+
+@mcp.tool()
+def esegui_preset(nome: str) -> list[dict[str, Any]]:
+    """Esegue i comandi di un preset salvato per nome."""
+    preset = comandi.carica_preset(store.data_dir())
+    if nome not in preset:
+        raise ValueError(f"Preset non trovato: {nome}")
+    return comandi.esegui(_REGISTRO_TOOL, preset[nome])
 
 
 def main() -> None:  # pragma: no cover - avvio stdio bloccante, coperto dallo smoke test JSON-RPC

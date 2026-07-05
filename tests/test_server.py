@@ -88,3 +88,43 @@ def test_riepilogo_presenze(cartella_dati):
     totali = server.riepilogo_presenze()
     assert totali["totale_ore"] == 11.5
     assert totali["per_causale"] == {"ORDINARIO": 7.5, "PERMESSO": 4.0}
+
+
+def test_esegui_comandi_batch(cartella_dati):
+    risultati = server.esegui_comandi(
+        [
+            {"tool": "info_cartella_dati", "argomenti": {}},
+            {"tool": "lista_presenze", "argomenti": {"mese": "2026-03"}},
+        ]
+    )
+    assert risultati[0]["risultato"]["cedolini_pdf"] == 1
+    assert len(risultati[1]["risultato"]) == 1
+
+
+def test_esegui_comandi_tool_sconosciuto_non_blocca(cartella_dati):
+    risultati = server.esegui_comandi(
+        [
+            {"tool": "cancella_tutto", "argomenti": {}},
+            {"tool": "info_cartella_dati", "argomenti": {}},
+        ]
+    )
+    assert "errore" in risultati[0]
+    assert risultati[1]["risultato"]["esiste"] is True
+
+
+def test_salva_elenca_ed_esegui_preset(cartella_dati):
+    comandi_preset = [{"tool": "riepilogo_presenze", "argomenti": {}}]
+    server.salva_preset("riepilogo_totale", comandi_preset)
+    assert server.elenca_preset() == {"riepilogo_totale": comandi_preset}
+    risultati = server.esegui_preset("riepilogo_totale")
+    assert risultati[0]["risultato"]["totale_ore"] == 11.5
+
+
+def test_esegui_preset_nome_sconosciuto(cartella_dati):
+    with pytest.raises(ValueError):
+        server.esegui_preset("non_esiste")
+
+
+def test_salva_preset_tool_sconosciuto_rifiutato(cartella_dati):
+    with pytest.raises(ValueError):
+        server.salva_preset("bad", [{"tool": "non_esiste", "argomenti": {}}])

@@ -61,3 +61,17 @@ def test_estrai_testo_pdf(tmp_path):
     percorso.write_bytes(pdf_minimo("NETTO IN BUSTA 1.434,68"))
     testo = estrai_testo_pdf(percorso)
     assert "NETTO IN BUSTA" in testo
+
+
+def test_estrai_testo_pdf_cache_invalidata_da_modifica(tmp_path):
+    from conftest import pdf_minimo
+
+    percorso = tmp_path / "cedolino.pdf"
+    percorso.write_bytes(pdf_minimo("NETTO IN BUSTA 100,00"))
+    primo = estrai_testo_pdf(percorso)
+    assert "100,00" in primo
+
+    percorso.write_bytes(pdf_minimo("NETTO IN BUSTA 999,99 DIVERSO"))
+    secondo = estrai_testo_pdf(percorso)
+    assert "999,99" in secondo
+    assert secondo != primo

@@ -56,8 +56,25 @@ In `~/Library/Application Support/Claude/claude_desktop_config.json`:
 | `cerca_nei_cedolini(testo)` | Ricerca full-text in tutti i cedolini |
 | `lista_presenze(mese?)` | Righe presenze, filtro `"AAAA-MM"` opzionale |
 | `riepilogo_presenze(mese?)` | Totale ore, giorni, ore per causale |
+| `esegui_comandi(comandi)` | Esegue più tool in sequenza in una sola chiamata |
+| `salva_preset(nome, comandi)` | Salva una combinazione di comandi richiamabile per nome |
+| `elenca_preset` | Elenca i preset salvati |
+| `esegui_preset(nome)` | Esegue i comandi di un preset salvato |
 
 Esempi di domande a Claude: *"quanto ho preso netto a marzo?"*, *"quante ore di permesso ho fatto quest'anno?"*, *"confronta le trattenute degli ultimi tre cedolini"*.
+
+## Comandi in batch e preset
+
+`esegui_comandi` accetta una lista di `{"tool": nome, "argomenti": {...}}` ed esegue tutto in una sola chiamata (meno round-trip, meno token): un errore in un comando non blocca gli altri, viene riportato come `{"tool": nome, "errore": ...}`.
+
+```json
+[
+  {"tool": "riepilogo_presenze", "argomenti": {"mese": "2026-03"}},
+  {"tool": "lista_cedolini", "argomenti": {}}
+]
+```
+
+`salva_preset("riepilogo_mensile", [...])` salva questa combinazione con un nome (dentro `presets.json` nella cartella dati); dopo, basta dire a Claude *"esegui il preset riepilogo_mensile"* invece di ripetere i comandi ogni volta. I tool batch/preset stessi non sono richiamabili da un preset (evita ricorsione infinita).
 
 ## Formati supportati
 
@@ -68,10 +85,12 @@ I tracciati Inaz variano per azienda. Il parsing è guidato da tabelle di patter
 
 Se il tuo export usa etichette diverse, aggiungi la variante alla tabella: nessuna modifica al codice.
 
+PDF e CSV vengono tenuti in cache in memoria (per file, invalidata da mtime+dimensione): riletture ripetute nella stessa sessione non ri-parsano da zero.
+
 ## Sviluppo
 
 ```bash
-uv run pytest --cov=inaz_mcp --cov-report=term-missing  # 32 test, copertura 100%
+uv run pytest --cov=inaz_mcp --cov-report=term-missing  # 47 test, copertura 100%
 uv run ruff check .                                       # lint
 uv run ruff format .                                      # formattazione
 uv run mypy inaz_mcp                                      # type check (strict)

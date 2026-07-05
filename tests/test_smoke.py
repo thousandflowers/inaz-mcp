@@ -31,4 +31,8 @@ def test_server_si_avvia_ed_espone_tutti_i_tool():
         "cerca_nei_cedolini",
         "lista_presenze",
         "riepilogo_presenze",
+        "esegui_comandi",
+        "elenca_preset",
+        "salva_preset",
+        "esegui_preset",
     }
