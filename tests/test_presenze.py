@@ -81,6 +81,22 @@ def test_csv_vuoto(tmp_path):
     assert leggi_presenze(_scrivi(tmp_path, "vuoto.csv", "")) == []
 
 
+def test_decodifica_fallback():
+    from inaz_mcp.presenze import _decodifica
+
+    assert _decodifica(b"ciao") == "ciao"
+    assert _decodifica("città".encode("cp1252")) == "città"  # non-UTF8 → cp1252
+    assert _decodifica(b"\x81") == "\x81"  # byte invalido in UTF-8 e cp1252 → latin-1
+
+
+def test_csv_cp1252_con_accenti(tmp_path):
+    percorso = tmp_path / "p.csv"
+    percorso.write_bytes("Data;Ore;Causale\n01/03/2026;8;INDENNITÀ\n".encode("cp1252"))
+    righe = leggi_presenze(percorso)
+    assert righe[0]["causale"] == "INDENNITÀ"
+    assert righe[0]["ore"] == 8.0
+
+
 def test_leggi_presenze_cache_invalidata_da_modifica(tmp_path):
     percorso = _scrivi(tmp_path, "p.csv", CSV_STANDARD)
     assert len(leggi_presenze(percorso)) == 2

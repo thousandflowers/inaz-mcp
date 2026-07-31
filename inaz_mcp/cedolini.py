@@ -1,5 +1,6 @@
 """Parsing cedolini Inaz: estrazione testo dal PDF e campi paga dal testo."""
 
+import os
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -63,6 +64,11 @@ def analizza_cedolino(testo: str) -> dict[str, str | float | None]:
 @lru_cache(maxsize=256)
 def _estrai_testo_pdf_cache(percorso: str, mtime_ns: int, dimensione: int) -> str:
     lettore = PdfReader(percorso)
+    if lettore.is_encrypted:
+        # Cedolini via email spesso protetti (di solito col codice fiscale):
+        # prova la password da INAZ_PDF_PASSWORD; la stringa vuota di default
+        # copre anche i PDF cifrati senza password di apertura.
+        lettore.decrypt(os.environ.get("INAZ_PDF_PASSWORD", ""))
     return "\n".join(pagina.extract_text() or "" for pagina in lettore.pages)
 
 

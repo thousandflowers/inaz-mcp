@@ -6,6 +6,12 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 dependencies = ["mcp>=1.2.0", "pypdf>=4.0.0"]
+keywords = ["mcp", "inaz", "cedolini", "presenze", "payroll", "hr", "claude"]
+
+[project.urls]
+Homepage = "https://github.com/thousandflowers/inaz-mcp"
+Repository = "https://github.com/thousandflowers/inaz-mcp"
+Issues = "https://github.com/thousandflowers/inaz-mcp/issues"
 
 [project.scripts]
 inaz-mcp = "inaz_mcp.server:main"

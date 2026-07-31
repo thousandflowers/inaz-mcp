@@ -22,7 +22,9 @@ cd inaz-mcp
 uv sync
 ```
 
-Metti i file scaricati da Inaz in `~/Documents/Inaz` (o imposta `INAZ_DATA_DIR`).
+Metti i file scaricati da Inaz in `~/Documents/Inaz` (o imposta `INAZ_DATA_DIR`). Le sottocartelle vanno bene: la scansione è ricorsiva e i file si leggono col loro percorso relativo (es. `2026/marzo.pdf`).
+
+Se i cedolini sono PDF **protetti da password** (capita per quelli inviati via email, spesso col codice fiscale), imposta `INAZ_PDF_PASSWORD`.
 
 ## Registrazione in Claude Code
 
@@ -85,6 +87,8 @@ I tracciati Inaz variano per azienda. Il parsing è guidato da tabelle di patter
 
 Se il tuo export usa etichette diverse, aggiungi la variante alla tabella: nessuna modifica al codice.
 
+I CSV vengono decodificati provando UTF-8 e poi cp1252/latin-1: gli export Inaz sono spesso in codifica Windows, e una causale accentata non fa più fallire la lettura dell'intero file.
+
 PDF e CSV vengono tenuti in cache in memoria (per file, invalidata da mtime+dimensione): riletture ripetute nella stessa sessione non ri-parsano da zero.
 
 Un cedolino scansionato (immagine, senza testo estraibile) non viene letto in silenzio: `lista_cedolini` e `leggi_cedolino` restituiscono un campo `avviso` che spiega perché i campi paga risultano vuoti.
@@ -92,7 +96,7 @@ Un cedolino scansionato (immagine, senza testo estraibile) non viene letto in si
 ## Sviluppo
 
 ```bash
-uv run pytest --cov=inaz_mcp --cov-report=term-missing  # 51 test, copertura 100%
+uv run pytest --cov=inaz_mcp --cov-report=term-missing  # 56 test, copertura 100%
 uv run ruff check .                                       # lint
 uv run ruff format .                                      # formattazione
 uv run mypy inaz_mcp                                      # type check (strict)

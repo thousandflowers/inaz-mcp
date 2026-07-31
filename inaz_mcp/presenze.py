@@ -77,9 +77,23 @@ def _rileva_delimitatore(prima_riga: str) -> str:
     return ";" if prima_riga.count(";") >= prima_riga.count(",") else ","
 
 
+def _decodifica(grezzo: bytes) -> str:
+    """Decodifica un CSV Inaz: prova UTF-8, poi cp1252 (export Windows), poi latin-1.
+
+    Gli export Inaz sono spesso cp1252, non UTF-8: senza fallback una singola
+    causale accentata farebbe fallire la lettura dell'intero file.
+    """
+    for codifica in ("utf-8-sig", "cp1252"):
+        try:
+            return grezzo.decode(codifica)
+        except UnicodeDecodeError:
+            continue
+    return grezzo.decode("latin-1")  # latin-1 non solleva mai: ultima rete
+
+
 @lru_cache(maxsize=256)
 def _leggi_presenze_cache(percorso: str, mtime_ns: int, dimensione: int) -> list[dict[str, Any]]:
-    contenuto = Path(percorso).read_text(encoding="utf-8-sig")
+    contenuto = _decodifica(Path(percorso).read_bytes())
     righe_grezze = contenuto.splitlines()
     if not righe_grezze:
         return []

@@ -61,6 +61,22 @@ def test_pdf_senza_testo_segnala_avviso(cartella_dati):
     assert "avviso" in voce
 
 
+def test_cedolino_in_sottocartella_elencato_e_leggibile(cartella_dati):
+    sub = cartella_dati / "2026"
+    sub.mkdir()
+    (sub / "marzo.pdf").write_bytes(pdf_minimo("NETTO IN BUSTA 500,00"))
+    voce = next(v for v in server.lista_cedolini() if v["file"].endswith("marzo.pdf"))
+    assert voce["file"] == "2026/marzo.pdf"  # path relativo, non solo basename
+    dati = server.leggi_cedolino("2026/marzo.pdf")  # rileggibile per nome
+    assert dati["netto"] == 500.0
+
+
+def test_nome_file_fuori_base_usa_basename():
+    from pathlib import Path
+
+    assert server._nome_file(Path("/altrove/x.pdf"), Path("/data")) == "x.pdf"
+
+
 def test_cerca_nei_cedolini(cartella_dati):
     trovati = server.cerca_nei_cedolini("netto")
     assert len(trovati) == 1

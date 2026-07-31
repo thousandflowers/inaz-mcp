@@ -65,6 +65,23 @@ def test_estrai_testo_pdf(tmp_path):
     assert "NETTO IN BUSTA" in testo
 
 
+def test_pdf_cifrato_letto_con_password(tmp_path, monkeypatch):
+    import io
+
+    from conftest import pdf_minimo
+    from pypdf import PdfReader, PdfWriter
+
+    writer = PdfWriter()
+    writer.append(PdfReader(io.BytesIO(pdf_minimo("NETTO IN BUSTA 777,00"))))
+    writer.encrypt("segreto")
+    percorso = tmp_path / "cifrato.pdf"
+    with percorso.open("wb") as f:
+        writer.write(f)
+
+    monkeypatch.setenv("INAZ_PDF_PASSWORD", "segreto")
+    assert "777,00" in estrai_testo_pdf(percorso)
+
+
 def test_estrai_testo_pdf_cache_invalidata_da_modifica(tmp_path):
     from conftest import pdf_minimo
 

@@ -1,6 +1,7 @@
 """Server MCP Inaz: espone cedolini e presenze locali come tool per Claude."""
 
 import re
+from pathlib import Path
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
@@ -18,6 +19,19 @@ _AVVISO_SCANSIONE = (
 def _valida_mese(mese: str | None) -> None:
     if mese and not re.fullmatch(r"\d{4}-\d{2}", mese):
         raise ValueError('Mese non valido: usare il formato "AAAA-MM", es. "2026-03"')
+
+
+def _nome_file(percorso: Path, base: Path) -> str:
+    """Nome del file relativo alla cartella dati (es. "2026/marzo.pdf").
+
+    Serve a distinguere file con lo stesso nome in sottocartelle diverse e a
+    poterli poi rileggere con `leggi_cedolino`: il basename da solo perderebbe
+    la sottocartella e il file non verrebbe ritrovato.
+    """
+    try:
+        return str(percorso.relative_to(base))
+    except ValueError:
+        return percorso.name
 
 
 @mcp.tool()
@@ -39,8 +53,9 @@ def info_cartella_dati() -> dict[str, Any]:
 @mcp.tool()
 def lista_cedolini() -> list[dict[str, Any]]:
     """Elenca i cedolini PDF nella cartella dati con i campi paga principali."""
+    base = store.data_dir()
     risultati = []
-    for percorso in store.trova_file(store.data_dir())["cedolini"]:
+    for percorso in store.trova_file(base)["cedolini"]:
         try:
             testo = cedolini.estrai_testo_pdf(percorso)
             dati = cedolini.analizza_cedolino(testo)
@@ -48,17 +63,18 @@ def lista_cedolini() -> list[dict[str, Any]]:
                 dati = {**dati, "avviso": _AVVISO_SCANSIONE}
         except Exception as errore:  # PDF corrotto: segnala, non bloccare la lista
             dati = {"errore": f"PDF non leggibile: {errore}"}
-        risultati.append({"file": percorso.name, **dati})
+        risultati.append({"file": _nome_file(percorso, base), **dati})
     return risultati
 
 
 @mcp.tool()
 def leggi_cedolino(nome_file: str) -> dict[str, Any]:
     """Legge un cedolino per nome file: campi estratti + testo completo."""
-    percorso = store.percorso_sicuro(store.data_dir(), nome_file)
+    base = store.data_dir()
+    percorso = store.percorso_sicuro(base, nome_file)
     testo = cedolini.estrai_testo_pdf(percorso)
     risultato: dict[str, Any] = {
-        "file": percorso.name,
+        "file": _nome_file(percorso, base.resolve()),
         **cedolini.analizza_cedolino(testo),
         "testo": testo,
     }
@@ -73,15 +89,16 @@ def cerca_nei_cedolini(testo: str) -> list[dict[str, Any]]:
     if not testo.strip():
         raise ValueError("Testo di ricerca vuoto")
     ago = testo.lower()
+    base = store.data_dir()
     risultati = []
-    for percorso in store.trova_file(store.data_dir())["cedolini"]:
+    for percorso in store.trova_file(base)["cedolini"]:
         try:
             contenuto = cedolini.estrai_testo_pdf(percorso)
         except Exception:
             continue
         righe = [r.strip() for r in contenuto.splitlines() if ago in r.lower()]
         if righe:
-            risultati.append({"file": percorso.name, "righe": righe})
+            risultati.append({"file": _nome_file(percorso, base), "righe": righe})
     return risultati
 
 
@@ -89,10 +106,11 @@ def cerca_nei_cedolini(testo: str) -> list[dict[str, Any]]:
 def lista_presenze(mese: str | None = None) -> list[dict[str, Any]]:
     """Righe presenze da tutti i CSV, opzionalmente filtrate per mese "AAAA-MM"."""
     _valida_mese(mese)
+    base = store.data_dir()
     righe = []
-    for percorso in store.trova_file(store.data_dir())["presenze"]:
+    for percorso in store.trova_file(base)["presenze"]:
         for riga in presenze.leggi_presenze(percorso):
-            righe.append({"file": percorso.name, **riga})
+            righe.append({"file": _nome_file(percorso, base), **riga})
     return presenze.filtra_mese(righe, mese)
 
 
