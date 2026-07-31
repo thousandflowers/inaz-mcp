@@ -59,6 +59,20 @@ def ore_in_float(testo: str) -> float | None:
         return None
 
 
+def ore_da_intervallo(entrata: str, uscita: str) -> float | None:
+    """Ore decimali tra entrata e uscita ("09:00"→"17:30" = 8.5).
+
+    None se un orario è illeggibile o l'uscita precede l'entrata.
+    """
+    # ponytail: singola coppia entrata/uscita, nessuna pausa pranzo dedotta e
+    # nessun turno a cavallo di mezzanotte; se il CSV ha una colonna Ore quella
+    # vince (questo calcolo scatta solo quando la colonna manca).
+    inizio, fine = ore_in_float(entrata), ore_in_float(uscita)
+    if inizio is None or fine is None or fine < inizio:
+        return None
+    return round(fine - inizio, 2)
+
+
 def _rileva_delimitatore(prima_riga: str) -> str:
     return ";" if prima_riga.count(";") >= prima_riga.count(",") else ","
 
@@ -83,6 +97,8 @@ def _leggi_presenze_cache(percorso: str, mtime_ns: int, dimensione: int) -> list
                 riga[chiave] = ore_in_float(valore)
             else:
                 riga[chiave] = valore
+        if riga.get("ore") is None and riga.get("entrata") and riga.get("uscita"):
+            riga["ore"] = ore_da_intervallo(riga["entrata"], riga["uscita"])
         righe.append(riga)
     return righe
 

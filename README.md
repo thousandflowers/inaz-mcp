@@ -8,7 +8,7 @@ Server MCP per interrogare da Claude i tuoi export **Inaz** (il gestionale HR: c
 Inaz non espone API pubbliche: l'integrazione ufficiale avviene via file. Questo server rende interrogabili i file che scarichi dal portale HR:
 
 - **Cedolini PDF** → estrazione automatica di netto, competenze, trattenute, periodo, codice fiscale
-- **Presenze/timbrature CSV** → righe normalizzate, filtri per mese, riepiloghi ore per causale
+- **Presenze/timbrature CSV** → righe normalizzate, filtri per mese, riepiloghi ore per causale (se manca la colonna Ore, le ore vengono calcolate da entrata/uscita)
 
 ## Requisiti
 
@@ -87,10 +87,12 @@ Se il tuo export usa etichette diverse, aggiungi la variante alla tabella: nessu
 
 PDF e CSV vengono tenuti in cache in memoria (per file, invalidata da mtime+dimensione): riletture ripetute nella stessa sessione non ri-parsano da zero.
 
+Un cedolino scansionato (immagine, senza testo estraibile) non viene letto in silenzio: `lista_cedolini` e `leggi_cedolino` restituiscono un campo `avviso` che spiega perché i campi paga risultano vuoti.
+
 ## Sviluppo
 
 ```bash
-uv run pytest --cov=inaz_mcp --cov-report=term-missing  # 47 test, copertura 100%
+uv run pytest --cov=inaz_mcp --cov-report=term-missing  # 51 test, copertura 100%
 uv run ruff check .                                       # lint
 uv run ruff format .                                      # formattazione
 uv run mypy inaz_mcp                                      # type check (strict)

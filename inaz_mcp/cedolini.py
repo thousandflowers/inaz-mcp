@@ -31,6 +31,10 @@ def numero_italiano(testo: str) -> float | None:
         return None
     if "," in testo:
         testo = testo.replace(".", "").replace(",", ".")
+    elif re.fullmatch(r"\d{1,3}(?:\.\d{3})+", testo):
+        # Punto come separatore migliaia senza decimali ("2.500" = 2500).
+        # "1234.56" non matcha (4 cifre iniziali / .56 non è un gruppo da 3): resta decimale.
+        testo = testo.replace(".", "")
     try:
         return float(testo)
     except ValueError:

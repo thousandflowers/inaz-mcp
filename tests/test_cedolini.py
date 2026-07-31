@@ -50,6 +50,8 @@ def test_numero_italiano():
     assert numero_italiano("1.234,56") == 1234.56
     assert numero_italiano("415,32") == 415.32
     assert numero_italiano("1234.56") == 1234.56
+    assert numero_italiano("2.500") == 2500.0  # punto = migliaia, nessun decimale
+    assert numero_italiano("12.345.678") == 12345678.0
     assert numero_italiano("") is None
     assert numero_italiano("abc") is None
 

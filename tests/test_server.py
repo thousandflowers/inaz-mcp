@@ -51,6 +51,16 @@ def test_leggi_cedolino_blocca_traversal(cartella_dati):
         server.leggi_cedolino("../../etc/passwd")
 
 
+def test_pdf_senza_testo_segnala_avviso(cartella_dati):
+    # PDF valido ma senza testo estraibile (simula una scansione/immagine).
+    (cartella_dati / "scansione.pdf").write_bytes(pdf_minimo(""))
+    dati = server.leggi_cedolino("scansione.pdf")
+    assert "avviso" in dati
+    assert dati["netto"] is None
+    voce = next(v for v in server.lista_cedolini() if v["file"] == "scansione.pdf")
+    assert "avviso" in voce
+
+
 def test_cerca_nei_cedolini(cartella_dati):
     trovati = server.cerca_nei_cedolini("netto")
     assert len(trovati) == 1

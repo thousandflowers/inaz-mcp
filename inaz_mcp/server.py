@@ -9,6 +9,11 @@ from inaz_mcp import cedolini, comandi, presenze, store
 
 mcp = FastMCP("inaz")
 
+_AVVISO_SCANSIONE = (
+    "Nessun testo estraibile dal PDF: probabile scansione/immagine, "
+    "i campi paga non sono rilevabili."
+)
+
 
 def _valida_mese(mese: str | None) -> None:
     if mese and not re.fullmatch(r"\d{4}-\d{2}", mese):
@@ -37,7 +42,10 @@ def lista_cedolini() -> list[dict[str, Any]]:
     risultati = []
     for percorso in store.trova_file(store.data_dir())["cedolini"]:
         try:
-            dati = cedolini.analizza_cedolino(cedolini.estrai_testo_pdf(percorso))
+            testo = cedolini.estrai_testo_pdf(percorso)
+            dati = cedolini.analizza_cedolino(testo)
+            if not testo.strip():
+                dati = {**dati, "avviso": _AVVISO_SCANSIONE}
         except Exception as errore:  # PDF corrotto: segnala, non bloccare la lista
             dati = {"errore": f"PDF non leggibile: {errore}"}
         risultati.append({"file": percorso.name, **dati})
@@ -49,11 +57,14 @@ def leggi_cedolino(nome_file: str) -> dict[str, Any]:
     """Legge un cedolino per nome file: campi estratti + testo completo."""
     percorso = store.percorso_sicuro(store.data_dir(), nome_file)
     testo = cedolini.estrai_testo_pdf(percorso)
-    return {
+    risultato: dict[str, Any] = {
         "file": percorso.name,
         **cedolini.analizza_cedolino(testo),
         "testo": testo,
     }
+    if not testo.strip():
+        risultato["avviso"] = _AVVISO_SCANSIONE
+    return risultato
 
 
 @mcp.tool()

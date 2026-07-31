@@ -4,6 +4,7 @@ from inaz_mcp.presenze import (
     filtra_mese,
     leggi_presenze,
     normalizza_data,
+    ore_da_intervallo,
     ore_in_float,
     riepilogo,
 )
@@ -11,6 +12,10 @@ from inaz_mcp.presenze import (
 CSV_STANDARD = """Data;Entrata;Uscita;Ore;Causale
 02/03/2026;09:00;17:30;7,5;ORDINARIO
 03/03/2026;09:00;13:00;4,0;PERMESSO
+"""
+
+CSV_SENZA_ORE = """Data;Entrata;Uscita;Causale
+04/03/2026;09:00;17:30;ORDINARIO
 """
 
 CSV_ALIAS = """GIORNO,INGRESSO,USCITA,ORE LAVORATE,GIUSTIFICATIVO
@@ -48,6 +53,24 @@ def test_ore_in_float():
     assert ore_in_float("") is None
     assert ore_in_float("abc") is None
     assert ore_in_float("aa:bb") is None
+
+
+def test_ore_da_intervallo():
+    assert ore_da_intervallo("09:00", "17:30") == 8.5
+    assert ore_da_intervallo("08:00", "12:00") == 4.0
+    assert ore_da_intervallo("17:00", "09:00") is None  # uscita prima dell'entrata
+    assert ore_da_intervallo("abc", "17:30") is None  # orario illeggibile
+
+
+def test_ore_calcolate_da_timbratura_quando_manca_colonna_ore(tmp_path):
+    righe = leggi_presenze(_scrivi(tmp_path, "p.csv", CSV_SENZA_ORE))
+    assert righe[0]["ore"] == 8.5  # 17:30 − 09:00, colonna Ore assente
+
+
+def test_colonna_ore_esplicita_non_viene_sovrascritta(tmp_path):
+    # CSV_STANDARD: entrata 09:00, uscita 17:30 (=8.5) ma Ore=7,5 (con pausa) → vince 7.5
+    righe = leggi_presenze(_scrivi(tmp_path, "p.csv", CSV_STANDARD))
+    assert righe[0]["ore"] == 7.5
 
 
 def test_data_non_riconosciuta_resta_invariata():
