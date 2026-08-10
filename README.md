@@ -1,20 +1,20 @@
 # inaz-mcp
 
-> ⚠️ Alpha — in sviluppo attivo. Non ancora pronto per l'uso quotidiano.
+> ⚠️ Alpha — in active development. Not ready for daily use yet.
 
 [![ci](https://github.com/thousandflowers/inaz-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/thousandflowers/inaz-mcp/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Server MCP per interrogare da Claude i tuoi export **Inaz** (il gestionale HR: cedolini, presenze).
+An MCP server that lets Claude query your **Inaz** exports (Inaz is an Italian HR platform: payslips, attendance records).
 
-Inaz non espone API pubbliche: l'integrazione ufficiale avviene via file. Questo server rende interrogabili i file che scarichi dal portale HR:
+Inaz exposes no public API — the official integration path is file-based. This server makes the files you download from the HR portal queryable:
 
-- **Cedolini PDF** → estrazione automatica di netto, competenze, trattenute, periodo, codice fiscale
-- **Presenze/timbrature CSV** → righe normalizzate, filtri per mese, riepiloghi ore per causale (se manca la colonna Ore, le ore vengono calcolate da entrata/uscita)
+- **Payslip PDFs** → automatic extraction of net pay, earnings, deductions, pay period, tax code
+- **Attendance/clock-in CSVs** → normalised rows, per-month filters, hour totals by category (if the Hours column is missing, hours are computed from clock-in/clock-out)
 
-## Requisiti
+## Requirements
 
-- Python ≥ 3.11 e [uv](https://docs.astral.sh/uv/)
+- Python ≥ 3.11 and [uv](https://docs.astral.sh/uv/)
 
 ## Setup
 
@@ -24,17 +24,17 @@ cd inaz-mcp
 uv sync
 ```
 
-Metti i file scaricati da Inaz in `~/Documents/Inaz` (o imposta `INAZ_DATA_DIR`). Le sottocartelle vanno bene: la scansione è ricorsiva e i file si leggono col loro percorso relativo (es. `2026/marzo.pdf`).
+Put the files you downloaded from Inaz in `~/Documents/Inaz` (or set `INAZ_DATA_DIR`). Subfolders are fine: the scan is recursive and files are addressed by their relative path (e.g. `2026/marzo.pdf`).
 
-Se i cedolini sono PDF **protetti da password** (capita per quelli inviati via email, spesso col codice fiscale), imposta `INAZ_PDF_PASSWORD`.
+If your payslips are **password-protected** PDFs (common for the ones sent by email, often protected with your tax code), set `INAZ_PDF_PASSWORD`.
 
-## Registrazione in Claude Code
+## Registering with Claude Code
 
 ```bash
 claude mcp add --scope user inaz -- uv --directory ~/Desktop/inaz-mcp run inaz-mcp
 ```
 
-## Registrazione in Claude Desktop
+## Registering with Claude Desktop
 
 In `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
@@ -43,33 +43,35 @@ In `~/Library/Application Support/Claude/claude_desktop_config.json`:
   "mcpServers": {
     "inaz": {
       "command": "uv",
-      "args": ["--directory", "/Users/TUO_UTENTE/Desktop/inaz-mcp", "run", "inaz-mcp"],
-      "env": { "INAZ_DATA_DIR": "/Users/TUO_UTENTE/Documents/Inaz" }
+      "args": ["--directory", "/Users/YOUR_USER/Desktop/inaz-mcp", "run", "inaz-mcp"],
+      "env": { "INAZ_DATA_DIR": "/Users/YOUR_USER/Documents/Inaz" }
     }
   }
 }
 ```
 
-## Tool esposti
+## Exposed tools
 
-| Tool | Cosa fa |
-|------|---------|
-| `info_cartella_dati` | Cartella configurata e conteggio file |
-| `lista_cedolini` | Tutti i cedolini PDF con campi paga estratti |
-| `leggi_cedolino(nome_file)` | Campi + testo completo di un cedolino |
-| `cerca_nei_cedolini(testo)` | Ricerca full-text in tutti i cedolini |
-| `lista_presenze(mese?)` | Righe presenze, filtro `"AAAA-MM"` opzionale |
-| `riepilogo_presenze(mese?)` | Totale ore, giorni, ore per causale |
-| `esegui_comandi(comandi)` | Esegue più tool in sequenza in una sola chiamata |
-| `salva_preset(nome, comandi)` | Salva una combinazione di comandi richiamabile per nome |
-| `elenca_preset` | Elenca i preset salvati |
-| `esegui_preset(nome)` | Esegue i comandi di un preset salvato |
+Tool names are the actual API and stay in Italian, matching the implementation.
 
-Esempi di domande a Claude: *"quanto ho preso netto a marzo?"*, *"quante ore di permesso ho fatto quest'anno?"*, *"confronta le trattenute degli ultimi tre cedolini"*.
+| Tool | What it does |
+|------|--------------|
+| `info_cartella_dati` | Configured data folder and file count |
+| `lista_cedolini` | All payslip PDFs with the extracted pay fields |
+| `leggi_cedolino(nome_file)` | Fields plus full text of a single payslip |
+| `cerca_nei_cedolini(testo)` | Full-text search across all payslips |
+| `lista_presenze(mese?)` | Attendance rows, optional `"YYYY-MM"` filter |
+| `riepilogo_presenze(mese?)` | Total hours, days, hours by category |
+| `esegui_comandi(comandi)` | Runs several tools in sequence in a single call |
+| `salva_preset(nome, comandi)` | Saves a combination of commands, recallable by name |
+| `elenca_preset` | Lists the saved presets |
+| `esegui_preset(nome)` | Runs the commands of a saved preset |
 
-## Comandi in batch e preset
+Example questions to ask Claude: *"what was my net pay in March?"*, *"how many hours of leave have I taken this year?"*, *"compare the deductions on my last three payslips"*.
 
-`esegui_comandi` accetta una lista di `{"tool": nome, "argomenti": {...}}` ed esegue tutto in una sola chiamata (meno round-trip, meno token): un errore in un comando non blocca gli altri, viene riportato come `{"tool": nome, "errore": ...}`.
+## Batch commands and presets
+
+`esegui_comandi` takes a list of `{"tool": name, "argomenti": {...}}` and runs it all in a single call (fewer round-trips, fewer tokens): an error in one command does not block the others, it is reported as `{"tool": name, "errore": ...}`.
 
 ```json
 [
@@ -78,38 +80,38 @@ Esempi di domande a Claude: *"quanto ho preso netto a marzo?"*, *"quante ore di 
 ]
 ```
 
-`salva_preset("riepilogo_mensile", [...])` salva questa combinazione con un nome (dentro `presets.json` nella cartella dati); dopo, basta dire a Claude *"esegui il preset riepilogo_mensile"* invece di ripetere i comandi ogni volta. I tool batch/preset stessi non sono richiamabili da un preset (evita ricorsione infinita).
+`salva_preset("riepilogo_mensile", [...])` saves that combination under a name (in `presets.json` inside the data folder); afterwards you just tell Claude *"run the riepilogo_mensile preset"* instead of repeating the commands every time. The batch/preset tools themselves cannot be called from a preset (this avoids infinite recursion).
 
-## Formati supportati
+## Supported formats
 
-I tracciati Inaz variano per azienda. Il parsing è guidato da tabelle di pattern:
+Inaz export layouts vary from company to company. Parsing is driven by pattern tables:
 
-- `inaz_mcp/cedolini.py` → `PATTERN_NUMERICI` / `PATTERN_TESTO` (regex per campo, vince il primo match)
-- `inaz_mcp/presenze.py` → `ALIAS_COLONNE` (varianti di intestazione CSV), `FORMATI_DATA`
+- `inaz_mcp/cedolini.py` → `PATTERN_NUMERICI` / `PATTERN_TESTO` (one regex per field, first match wins)
+- `inaz_mcp/presenze.py` → `ALIAS_COLONNE` (CSV header variants), `FORMATI_DATA`
 
-Se il tuo export usa etichette diverse, aggiungi la variante alla tabella: nessuna modifica al codice.
+If your export uses different labels, add the variant to the table: no code changes needed.
 
-I CSV vengono decodificati provando UTF-8 e poi cp1252/latin-1: gli export Inaz sono spesso in codifica Windows, e una causale accentata non fa più fallire la lettura dell'intero file.
+CSVs are decoded by trying UTF-8 and then cp1252/latin-1: Inaz exports are often Windows-encoded, and an accented category label no longer breaks the reading of the whole file.
 
-PDF e CSV vengono tenuti in cache in memoria (per file, invalidata da mtime+dimensione): riletture ripetute nella stessa sessione non ri-parsano da zero.
+PDFs and CSVs are held in an in-memory cache (per file, invalidated by mtime + size): repeated reads within the same session do not re-parse from scratch.
 
-Un cedolino scansionato (immagine, senza testo estraibile) non viene letto in silenzio: `lista_cedolini` e `leggi_cedolino` restituiscono un campo `avviso` che spiega perché i campi paga risultano vuoti.
+A scanned payslip (an image, with no extractable text) is not read silently: `lista_cedolini` and `leggi_cedolino` return an `avviso` field explaining why the pay fields came back empty.
 
-## Sviluppo
+## Development
 
 ```bash
-uv run pytest --cov=inaz_mcp --cov-report=term-missing  # 56 test, copertura 100%
+uv run pytest --cov=inaz_mcp --cov-report=term-missing  # 56 tests, 100% coverage
 uv run ruff check .                                       # lint
-uv run ruff format .                                      # formattazione
+uv run ruff format .                                      # formatting
 uv run mypy inaz_mcp                                      # type check (strict)
 ```
 
-CI su GitHub Actions esegue tutti e quattro su Python 3.11/3.12/3.13 a ogni push.
+CI on GitHub Actions runs all four on Python 3.11/3.12/3.13 on every push.
 
 ## Privacy
 
-Tutto gira in locale: nessun dato lascia il tuo Mac. I cedolini contengono dati personali — la cartella dati resta fuori dal repository.
+Everything runs locally: no data leaves your Mac. Payslips contain personal data — the data folder stays outside the repository.
 
-## Licenza
+## License
 
 [MIT](LICENSE)
