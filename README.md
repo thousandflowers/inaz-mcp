@@ -1,5 +1,7 @@
 # inaz-mcp
 
+> ⚠️ Alpha — in sviluppo attivo. Non ancora pronto per l'uso quotidiano.
+
 [![ci](https://github.com/thousandflowers/inaz-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/thousandflowers/inaz-mcp/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
