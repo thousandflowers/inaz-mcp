@@ -1,13 +1,13 @@
 # inaz-mcp
 
-> ⚠️ Alpha — in active development. Not ready for daily use yet.
+> ⚠️ Alpha - in active development. Not ready for daily use yet.
 
 [![ci](https://github.com/thousandflowers/inaz-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/thousandflowers/inaz-mcp/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 An MCP server that lets Claude query your **Inaz** exports (Inaz is an Italian HR platform: payslips, attendance records).
 
-Inaz exposes no public API — the official integration path is file-based. This server makes the files you download from the HR portal queryable:
+Inaz exposes no public API - the official integration path is file-based. This server makes the files you download from the HR portal queryable:
 
 - **Payslip PDFs** → automatic extraction of net pay, earnings, deductions, pay period, tax code
 - **Attendance/clock-in CSVs** → normalised rows, per-month filters, hour totals by category (if the Hours column is missing, hours are computed from clock-in/clock-out)
@@ -110,7 +110,7 @@ CI on GitHub Actions runs all four on Python 3.11/3.12/3.13 on every push.
 
 ## Privacy
 
-Everything runs locally: no data leaves your Mac. Payslips contain personal data — the data folder stays outside the repository.
+Everything runs locally: no data leaves your Mac. Payslips contain personal data - the data folder stays outside the repository.
 
 ## License
 
